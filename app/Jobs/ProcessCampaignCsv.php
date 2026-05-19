@@ -13,7 +13,8 @@ class ProcessCampaignCsv implements ShouldQueue
 
     public function __construct(
         public Campaign $campaign,
-        public string $filePath
+        public string $filePath,
+        public string $separator = ','
     ) {}
 
     public function handle(): void
@@ -21,12 +22,12 @@ class ProcessCampaignCsv implements ShouldQueue
         $this->campaign->update(['status' => 'processing']);
 
         $file      = fopen($this->filePath, 'r');
-        $header    = fgetcsv($file);
+        $header = fgetcsv($file, 0, $this->separator);
         $totalRows = 0;
         $inserted  = 0;
         $batch     = [];
 
-        while (($row = fgetcsv($file)) !== false) {
+        while (($row = fgetcsv($file, 0, $this->separator)) !== false) {
             $data = array_combine($header, $row);
 
             $batch[] = [
@@ -63,5 +64,9 @@ class ProcessCampaignCsv implements ShouldQueue
             'total_contacts'  => $totalRows,
             'duplicate_count' => $totalRows - $inserted,
         ]);
+
+        if (file_exists($this->filePath)) {
+            unlink($this->filePath);
+        }
     }
 }
