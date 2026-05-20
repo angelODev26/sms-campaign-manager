@@ -22,9 +22,8 @@ class ProcessCampaignCsv implements ShouldQueue
         $this->campaign->update(['status' => 'processing']);
 
         $file      = fopen($this->filePath, 'r');
-        $header = fgetcsv($file, 0, $this->separator);
+        $header    = fgetcsv($file, 0, $this->separator);
         $totalRows = 0;
-        $inserted  = 0;
         $batch     = [];
 
         while (($row = fgetcsv($file, 0, $this->separator)) !== false) {
@@ -45,31 +44,30 @@ class ProcessCampaignCsv implements ShouldQueue
             $totalRows++;
 
             if (count($batch) === 500) {
-                $before    = CampaignDetail::where('campaign_id', $this->campaign->id)->count();
                 CampaignDetail::insertOrIgnore($batch);
-                $after     = CampaignDetail::where('campaign_id', $this->campaign->id)->count();
-                $inserted += ($after - $before);
-                $batch     = [];
+                $batch = [];
             }
         }
 
         if (!empty($batch)) {
-            $before    = CampaignDetail::where('campaign_id', $this->campaign->id)->count();
             CampaignDetail::insertOrIgnore($batch);
-            $after     = CampaignDetail::where('campaign_id', $this->campaign->id)->count();
-            $inserted += ($after - $before);
         }
 
         fclose($file);
 
-        $this->campaign->update([
-            'status'          => 'scheduled',
-            'total_contacts'  => $totalRows,
-            'duplicate_count' => $totalRows - $inserted,
-        ]);
-
         if (file_exists($this->filePath)) {
             unlink($this->filePath);
         }
+
+        $realInserted = CampaignDetail::where('campaign_id', $this->campaign->id)->count();
+
+        $this->campaign->update([
+            'status'          => 'scheduled',
+            'total_contacts'  => $totalRows,
+            'duplicate_count' => $totalRows - $realInserted,
+        ]);
+
+        SendCampaignSms::dispatch($this->campaign)
+            ->delay($this->campaign->scheduled_at);
     }
 }

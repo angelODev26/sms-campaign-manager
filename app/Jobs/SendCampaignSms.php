@@ -20,41 +20,36 @@ class SendCampaignSms implements ShouldQueue
     {
         $this->campaign->update(['status' => 'running']);
 
-        $sent  = 0;
-        $limit = 10;
+        $sent = 0;
 
-        // Enviar los primeros 10
         $this->campaign->details()
             ->where('status', 'pending')
             ->orderBy('id')
-            ->limit($limit)
             ->get()
             ->each(function (CampaignDetail $detail) use (&$sent) {
                 try {
-                    // Aquí irá la integración real con proveedor SMS
-                    // Por ahora simulamos el envío
-                    Log::info("SMS enviado", [
+                    // Simular envío con estado aleatorio
+                    $success = (bool) rand(0, 9) > 1; // 80% éxito, 20% fallo
+
+                    Log::info("SMS simulado", [
                         'phone'   => $detail->phone,
                         'name'    => $detail->name,
                         'message' => $detail->message,
+                        'result'  => $success ? 'sent' : 'failed',
                     ]);
 
                     $detail->update([
-                        'status'  => 'sent',
-                        'sent_at' => now(),
+                        'status'  => $success ? 'sent' : 'failed',
+                        'sent_at' => $success ? now() : null,
                     ]);
 
-                    $sent++;
+                    if ($success) $sent++;
+
                 } catch (\Exception $e) {
                     $detail->update(['status' => 'failed']);
                     Log::error("Error enviando SMS a {$detail->phone}: {$e->getMessage()}");
                 }
             });
-
-        // Marcar el resto como simulados
-        $this->campaign->details()
-            ->where('status', 'pending')
-            ->update(['status' => 'simulated']);
 
         $this->campaign->update([
             'status'     => 'completed',
