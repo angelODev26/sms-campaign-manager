@@ -10,6 +10,7 @@ class CampaignDetail extends Model
         'campaign_id',
         'phone',
         'name',
+        'message',
         'status',
         'sent_at',
     ];

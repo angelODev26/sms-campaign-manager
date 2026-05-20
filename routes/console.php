@@ -1,8 +1,14 @@
 <?php
 
-use Illuminate\Foundation\Inspiring;
-use Illuminate\Support\Facades\Artisan;
+use App\Jobs\SendCampaignSms;
+use App\Models\Campaign;
+use Illuminate\Support\Facades\Schedule;
 
-Artisan::command('inspire', function () {
-    $this->comment(Inspiring::quote());
-})->purpose('Display an inspiring quote');
+Schedule::call(function () {
+    Campaign::where('status', 'scheduled')
+        ->where('scheduled_at', '<=', now())
+        ->get()
+        ->each(function (Campaign $campaign) {
+            SendCampaignSms::dispatch($campaign);
+        });
+})->everyMinute();

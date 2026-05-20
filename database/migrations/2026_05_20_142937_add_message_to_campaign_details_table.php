@@ -11,10 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('campaigns', function (Blueprint $table) {
-            $table->unsignedInteger('total_contacts')->default(0);
-            $table->unsignedInteger('duplicate_count')->default(0);
-            $table->unsignedInteger('sent_count')->default(0);
+        Schema::table('campaign_details', function (Blueprint $table) {
+            $table->text('message')->nullable();
         });
     }
 
@@ -23,7 +21,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('campaigns', function (Blueprint $table) {
+        Schema::table('campaign_details', function (Blueprint $table) {
             //
         });
     }
