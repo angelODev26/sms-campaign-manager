@@ -18,36 +18,39 @@ class SendCampaignSms implements ShouldQueue
 
     public function handle(): void
     {
+
+        // Evitar doble ejecución
+        if ($this->campaign->status === 'completed') {
+            return;
+        }
+
+        $this->campaign->refresh();
         $this->campaign->update(['status' => 'running']);
 
         $sent = 0;
 
         $this->campaign->details()
             ->where('status', 'pending')
-            ->orderBy('id')
-            ->get()
-            ->each(function (CampaignDetail $detail) use (&$sent) {
-                try {
-                    // Simular envío con estado aleatorio
-                    $success = rand(1, 10) <= 8; // 80% éxito, 20% fallo
+            ->chunkById(500, function ($details) use (&$sent) {
+                $sentIds   = [];
+                $failedIds = [];
 
-                    $detail->update([
-                        'status'  => $success ? 'sent' : 'failed',
-                        'sent_at' => $success ? now() : null,
-                    ]);
+                foreach ($details as $detail) {
+                    if (rand(1, 10) <= 8) {
+                        $sentIds[] = $detail->id;
+                        $sent++;
+                    } else {
+                        $failedIds[] = $detail->id;
+                    }
+                }
 
-                    if ($success) $sent++;
-
-                } catch (\Exception $e) {
-                    $detail->update(['status' => 'failed']);
-                    Log::error("Error enviando SMS a {$detail->phone}: {$e->getMessage()}");
+                if (!empty($sentIds)) {
+                    CampaignDetail::whereIn('id', $sentIds)->update(['status' => 'sent', 'sent_at' => now()]);
+                }
+                if (!empty($failedIds)) {
+                    CampaignDetail::whereIn('id', $failedIds)->update(['status' => 'failed']);
                 }
             });
-
-        Log::info("Conteo ", [
-            'Enviados'    => $sent
-        ]);
-
         $this->campaign->update([
             'status'     => 'completed',
             'sent_count' => $sent,

@@ -35,7 +35,7 @@ class ProcessCampaignCsv implements ShouldQueue
                 'campaign_id' => $this->campaign->id,
                 'phone'       => $data['phone'] ?? $row[0],
                 'name'        => $data['name']  ?? $row[1] ?? null,
-                'message'     => isset($data['message'])
+                'message' => !empty($data['message'])
                     ? $data['message']
                     : str_replace('{name}', $data['name'] ?? '', $this->campaign->message),
                 'status'      => 'pending',
