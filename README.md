@@ -2,7 +2,7 @@
 
 A backend API for managing and dispatching bulk SMS campaigns with asynchronous processing, Redis queues, and scheduled delivery.
 
-Built with **Laravel 9**, **MySQL**, **Redis**, and **Docker**.
+Built with **Laravel 12**, **MySQL**, **Redis**, and **Docker**.
 
 ---
 
@@ -24,7 +24,7 @@ Built with **Laravel 9**, **MySQL**, **Redis**, and **Docker**.
 
 | Layer | Technology |
 |---|---|
-| Framework | Laravel 9 |
+| Framework | Laravel 12 |
 | Auth | Laravel Sanctum |
 | Database | MySQL 8 |
 | Queue / Cache | Redis |
