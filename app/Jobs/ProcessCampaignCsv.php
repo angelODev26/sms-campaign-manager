@@ -6,6 +6,7 @@ use App\Models\Campaign;
 use App\Models\CampaignDetail;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\Log;
 
 class ProcessCampaignCsv implements ShouldQueue
 {
@@ -19,6 +20,7 @@ class ProcessCampaignCsv implements ShouldQueue
 
     public function handle(): void
     {
+        Log::info("ProcessCampaignCsv iniciado", ['campaign_id' => $this->campaign->id]);
         $this->campaign->update(['status' => 'processing']);
 
         $file      = fopen($this->filePath, 'r');
@@ -60,6 +62,12 @@ class ProcessCampaignCsv implements ShouldQueue
         }
 
         $realInserted = CampaignDetail::where('campaign_id', $this->campaign->id)->count();
+
+        Log::info("Conteo final", [
+            'totalRows'    => $totalRows,
+            'realInserted' => $realInserted,
+            'duplicates'   => $totalRows - $realInserted,
+        ]);
 
         $this->campaign->update([
             'status'          => 'scheduled',

@@ -12,6 +12,9 @@ class Campaign extends Model
         'message',
         'status',
         'scheduled_at',
+        'total_contacts',
+        'duplicate_count',
+        'sent_count'
     ];
 
     protected $casts = [

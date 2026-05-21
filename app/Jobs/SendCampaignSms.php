@@ -29,14 +29,7 @@ class SendCampaignSms implements ShouldQueue
             ->each(function (CampaignDetail $detail) use (&$sent) {
                 try {
                     // Simular envío con estado aleatorio
-                    $success = (bool) rand(0, 9) > 1; // 80% éxito, 20% fallo
-
-                    Log::info("SMS simulado", [
-                        'phone'   => $detail->phone,
-                        'name'    => $detail->name,
-                        'message' => $detail->message,
-                        'result'  => $success ? 'sent' : 'failed',
-                    ]);
+                    $success = rand(1, 10) <= 8; // 80% éxito, 20% fallo
 
                     $detail->update([
                         'status'  => $success ? 'sent' : 'failed',
@@ -50,6 +43,10 @@ class SendCampaignSms implements ShouldQueue
                     Log::error("Error enviando SMS a {$detail->phone}: {$e->getMessage()}");
                 }
             });
+
+        Log::info("Conteo ", [
+            'Enviados'    => $sent
+        ]);
 
         $this->campaign->update([
             'status'     => 'completed',
