@@ -69,7 +69,14 @@ class CampaignController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
+        if ($campaign->status === 'completed') {
+            return response()->json(['message' => 'Completed campaigns cannot be deleted'], 422);
+        }
+
+        // Eliminar detalles primero por la llave foránea
+        $campaign->details()->delete();
         $campaign->delete();
+
         return response()->json(['message' => 'Campaign deleted']);
     }
 }
